@@ -80,7 +80,7 @@ bool allowed = ownerGuild != 0 && AscensionAPI.AscensionGetOwnGuildId() == owner
 - **Losing levels.** When the player goes down a level, passives that no longer fit the passive points are refunded automatically.
 - **Level changes.** `AscensionAddLevel` and `AscensionRemoveLevel` start the player at the beginning of the new level (0 XP inside it), like the admin level commands.
 - **XP multipliers.** XP given or removed through the API is applied as is. It is not scaled by the VikingsAscension XP multipliers.
-- **Load order.** Calls made before VikingsAscension is found return 0. The API looks for VikingsAscension again at most once per second, so later calls work normally.
+- **Load order.** The API resolves VikingsAscension once, on the first call, using `Type.GetType("VikingsAscension.AscensionAPI, VikingsAscension")`, and caches its method delegates. Use the soft dependency above so VikingsAscension loads first. If resolution fails, calls keep returning their default values for the rest of the session; there is no retry timer.
 - **Errors.** Calls never throw. If something fails inside VikingsAscension, the call returns 0.
 
 ## Troubleshooting

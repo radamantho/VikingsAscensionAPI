@@ -8,10 +8,9 @@ namespace VikingsAscensionAPI
     {
         private const string ImplAssemblyName = "VikingsAscension";
         private const string ImplTypeName = "VikingsAscension.AscensionAPI";
-        private const int ResolveRetryMs = 1000;
 
         private static bool _resolved;
-        private static int _nextResolveTick;
+        private static bool _resolveAttempted;
         private static Func<int, int>? _addExperience;
         private static Func<int, int>? _removeExperience;
         private static Func<int, int>? _addLevel;
@@ -77,17 +76,14 @@ namespace VikingsAscensionAPI
 
         private static bool Resolve()
         {
-            if (_resolved) return true;
-
-            int now = Environment.TickCount;
-            if (_nextResolveTick != 0 && unchecked(now - _nextResolveTick) < 0) return false;
-            _nextResolveTick = unchecked(now + ResolveRetryMs);
-
-            Type? impl = FindImplType();
-            if (impl == null) return false;
+            if (_resolveAttempted) return _resolved;
+            _resolveAttempted = true;
 
             try
             {
+                Type? impl = Type.GetType(ImplTypeName + ", " + ImplAssemblyName, false);
+                if (impl == null) return false;
+
                 _addExperience = Method(impl, nameof(AscensionAddExperience));
                 _removeExperience = Method(impl, nameof(AscensionRemoveExperience));
                 _addLevel = Method(impl, nameof(AscensionAddLevel));
@@ -107,13 +103,6 @@ namespace VikingsAscensionAPI
 
             _resolved = true;
             return true;
-        }
-
-        private static Type? FindImplType()
-        {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                if (assembly.GetName().Name == ImplAssemblyName) return assembly.GetType(ImplTypeName, false);
-            return null;
         }
 
         private static Func<int, int> Method(Type impl, string name)
