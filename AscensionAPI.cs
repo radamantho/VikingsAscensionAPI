@@ -22,6 +22,11 @@ namespace VikingsAscensionAPI
         private static Func<string, string, int>? _playerGuild;
         private static Func<int, string, string, bool>? _isMember;
         private static Func<int, string>? _guildName;
+        private static Func<bool>? _isLoaded;
+        private static Func<ItemDrop.ItemData, int, int>? _addSockets;
+        private static Func<ItemDrop.ItemData, string, int, bool>? _addRune;
+        private static Func<ItemDrop.ItemData, int>? _socketCount;
+        private static Func<ItemDrop.ItemData, int>? _rarity;
 
         public static int AscensionAddExperience(int amount) => Resolve() ? Call(_addExperience, amount) : 0;
 
@@ -60,6 +65,33 @@ namespace VikingsAscensionAPI
             catch { return string.Empty; }
         }
 
+        public static bool AscensionIsLoaded() => Resolve() && Read(_isLoaded);
+
+        public static int AscensionAddSockets(ItemDrop.ItemData item, int amount)
+        {
+            if (item == null || amount < 1 || !Resolve() || _addSockets == null) return 0;
+            try { return _addSockets(item, amount); }
+            catch { return 0; }
+        }
+
+        public static bool AscensionAddRune(ItemDrop.ItemData item, string rune, int level)
+        {
+            if (item == null || string.IsNullOrEmpty(rune) || !Resolve() || _addRune == null) return false;
+            try { return _addRune(item, rune, level); }
+            catch { return false; }
+        }
+
+        public static int AscensionGetSocketCount(ItemDrop.ItemData item) => ReadItem(_socketCount, item);
+
+        public static int AscensionGetRarity(ItemDrop.ItemData item) => ReadItem(_rarity, item);
+
+        private static int ReadItem(Func<ItemDrop.ItemData, int>? method, ItemDrop.ItemData item)
+        {
+            if (item == null || !Resolve() || method == null) return 0;
+            try { return method(item); }
+            catch { return 0; }
+        }
+
         private static int Call(Func<int, int>? method, int value)
         {
             if (value < 1 || method == null) return 0;
@@ -95,6 +127,11 @@ namespace VikingsAscensionAPI
                 _playerGuild = Bind<Func<string, string, int>>(impl, nameof(AscensionGetPlayerGuildId), typeof(string), typeof(string));
                 _isMember = Bind<Func<int, string, string, bool>>(impl, nameof(AscensionIsGuildMember), typeof(int), typeof(string), typeof(string));
                 _guildName = Bind<Func<int, string>>(impl, nameof(AscensionGetGuildName), typeof(int));
+                _isLoaded = Bind<Func<bool>>(impl, nameof(AscensionIsLoaded));
+                _addSockets = Bind<Func<ItemDrop.ItemData, int, int>>(impl, nameof(AscensionAddSockets), typeof(ItemDrop.ItemData), typeof(int));
+                _addRune = Bind<Func<ItemDrop.ItemData, string, int, bool>>(impl, nameof(AscensionAddRune), typeof(ItemDrop.ItemData), typeof(string), typeof(int));
+                _socketCount = Bind<Func<ItemDrop.ItemData, int>>(impl, nameof(AscensionGetSocketCount), typeof(ItemDrop.ItemData));
+                _rarity = Bind<Func<ItemDrop.ItemData, int>>(impl, nameof(AscensionGetRarity), typeof(ItemDrop.ItemData));
             }
             catch
             {

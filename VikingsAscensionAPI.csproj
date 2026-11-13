@@ -30,6 +30,10 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="assembly_valheim">
+      <HintPath>Libs\assembly_valheim.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AscensionAPI.cs" />

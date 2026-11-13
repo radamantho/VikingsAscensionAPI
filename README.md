@@ -1,11 +1,11 @@
 # VikingsAscensionAPI
 
-Small API DLL that lets other Valheim mods give, remove and read **VikingsAscension** XP and levels, and read its guilds.
+Small API DLL that lets other Valheim mods give, remove and read **VikingsAscension** XP and levels, read its guilds and add rune sockets to items.
 
 - Reference `VikingsAscensionAPI.dll` and merge it into your mod with ILRepack.
 - VikingsAscension is **not** required. Without it, every call returns 0 and nothing breaks.
 - VikingsAscension is found at runtime, so updating it does not require rebuilding your mod.
-- No Valheim, Unity or BepInEx references: the DLL depends only on .NET Framework 4.8.
+- The only game reference is `assembly_valheim` (for `ItemDrop.ItemData`), which every Valheim mod already has. No Unity or BepInEx references.
 
 ## Setup
 
@@ -74,6 +74,29 @@ int ownerGuild = AscensionAPI.AscensionGetOwnGuildId();
 bool allowed = ownerGuild != 0 && AscensionAPI.AscensionGetOwnGuildId() == ownerGuild;
 ```
 
+## Sockets
+
+Functions to give items with rune sockets, for example quest rewards, shop items or boss drops. They work on any item instance, before or after it goes into an inventory.
+
+| Method | Description | Returns |
+|---|---|---|
+| `AscensionIsLoaded()` | Whether VikingsAscension is installed and enabled. | `bool` |
+| `AscensionAddSockets(ItemDrop.ItemData item, int amount)` | Opens empty sockets on the item, up to 10 in total. Ignores the server's Maximum Sockets setting. | Sockets opened, or 0 if the item cannot have sockets. |
+| `AscensionAddRune(ItemDrop.ItemData item, string rune, int level)` | Places a rune (level 1 to 9) in the first empty socket. | `false` when there is no empty socket, the rune does not exist, does not fit the item or is already on it. |
+| `AscensionGetSocketCount(ItemDrop.ItemData item)` | Reads how many sockets the item has. Changes nothing. | Socket count. |
+| `AscensionGetRarity(ItemDrop.ItemData item)` | Reads the rune rarity of the item. Changes nothing. | 0 common, 1 magic, 2 rare, 3 epic, 4 legendary. |
+
+Rune names: `durability`, `lightness`, `resilience`, `selfrepair`, `soulbound`, `laststand`, `adrenaline`, `comfort`, `doublejump`, `return`, `blessing`, `firmness`, `challenge`.
+
+```csharp
+var item = prefab.GetComponent<ItemDrop>().m_itemData.Clone();
+AscensionAPI.AscensionAddSockets(item, 3);
+AscensionAPI.AscensionAddRune(item, "durability", 2);
+player.GetInventory().AddItem(item);
+```
+
+Equipment that cannot hold sockets (food, materials, ammo, torches and items in the server's socket blacklist) is refused.
+
 ## Behavior
 
 - **Max level.** XP and levels past the server's max level are discarded. `AscensionAddExperience` returns 0 at max level and while the player is dead.
@@ -92,4 +115,4 @@ bool allowed = ownerGuild != 0 && AscensionAPI.AscensionGetOwnGuildId() == owner
 
 ## Building
 
-Open `VikingsAscensionAPI.sln` in Visual Studio and build the `Release` configuration. No extra references are needed. The output goes to `bin/Release/`, and a prebuilt `VikingsAscensionAPI.dll` is included at the repository root.
+Open `VikingsAscensionAPI.sln` in Visual Studio and build the `Release` configuration. The only extra reference, `assembly_valheim.dll`, is in `Libs/`. The output goes to `bin/Release/`, and a prebuilt `VikingsAscensionAPI.dll` is included at the repository root.
