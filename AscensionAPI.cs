@@ -27,6 +27,8 @@ namespace VikingsAscensionAPI
         private static Func<ItemDrop.ItemData, string, int, bool>? _addRune;
         private static Func<ItemDrop.ItemData, int>? _socketCount;
         private static Func<ItemDrop.ItemData, int>? _rarity;
+        private static Action<string, float>? _setXpMultiplier;
+        private static Action<string>? _clearXpMultiplier;
 
         public static int AscensionAddExperience(int amount) => Resolve() ? Call(_addExperience, amount) : 0;
 
@@ -85,6 +87,20 @@ namespace VikingsAscensionAPI
 
         public static int AscensionGetRarity(ItemDrop.ItemData item) => ReadItem(_rarity, item);
 
+        public static void AscensionSetExperienceMultiplier(string id, float multiplier)
+        {
+            if (!Resolve() || _setXpMultiplier == null || string.IsNullOrEmpty(id)) return;
+            try { _setXpMultiplier(id, multiplier); }
+            catch { }
+        }
+
+        public static void AscensionClearExperienceMultiplier(string id)
+        {
+            if (!Resolve() || _clearXpMultiplier == null || string.IsNullOrEmpty(id)) return;
+            try { _clearXpMultiplier(id); }
+            catch { }
+        }
+
         private static int ReadItem(Func<ItemDrop.ItemData, int>? method, ItemDrop.ItemData item)
         {
             if (item == null || !Resolve() || method == null) return 0;
@@ -132,6 +148,8 @@ namespace VikingsAscensionAPI
                 _addRune = Bind<Func<ItemDrop.ItemData, string, int, bool>>(impl, nameof(AscensionAddRune), typeof(ItemDrop.ItemData), typeof(string), typeof(int));
                 _socketCount = Bind<Func<ItemDrop.ItemData, int>>(impl, nameof(AscensionGetSocketCount), typeof(ItemDrop.ItemData));
                 _rarity = Bind<Func<ItemDrop.ItemData, int>>(impl, nameof(AscensionGetRarity), typeof(ItemDrop.ItemData));
+                _setXpMultiplier = Bind<Action<string, float>>(impl, nameof(AscensionSetExperienceMultiplier), typeof(string), typeof(float));
+                _clearXpMultiplier = Bind<Action<string>>(impl, nameof(AscensionClearExperienceMultiplier), typeof(string));
             }
             catch
             {
